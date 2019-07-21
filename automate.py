@@ -154,11 +154,11 @@ def start_like_process(videos_url):
                             like_count += 1
                             output_box.delete(END)
                             output_box.insert(END, "Like Count: {}".format(like_count))
+                            delay(5)
                         else:
                             ActionChains(driver).move_to_element(button).perform()
                     except Exception as ex:
                         pass
-                    delay(2, fixed=True)
                 if iter_check % 2 == 0 and previous_buttons == buttons:
                     break
                 body = driver.find_element_by_tag_name('body')
