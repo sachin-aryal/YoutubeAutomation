@@ -63,7 +63,7 @@ def start_automation(re_initialize=False):
     try:
         global driver
         # Selenium Driver Initilization Work
-        chromedriver = os.path.join(dir_path, "chromedriver")
+        chromedriver = os.path.join(dir_path, "chromedriver.exe")
         if re_initialize or driver is None:
             chrome_options = webdriver.ChromeOptions()
             chrome_options.add_argument("--mute-audio")
