@@ -63,7 +63,7 @@ def start_automation(re_initialize=False):
     try:
         global driver
         # Selenium Driver Initilization Work
-        chromedriver = os.path.join(dir_path, "chromedriver.exe")
+        chromedriver = os.path.join(sys._MEIPASS, "chromedriver.exe")
         if re_initialize or driver is None:
             chrome_options = webdriver.ChromeOptions()
             chrome_options.add_argument("--mute-audio")
@@ -116,8 +116,7 @@ def create_initial_screen():
     output_box.grid(column=1, row=row, sticky=N + S + W + E, rowspan=5)
     root.grid_rowconfigure(row, weight=1)
     row += 1
-    # submit_button = tk.Button(root, text='Submit', bg="green", fg='white', activebackground="#001C7C")
-    submit_button = tk.Button(root, text='Submit')
+    submit_button = tk.Button(root, text='Submit', bg="green", fg='white', activebackground="#001C7C")
     submit_button['command'] = lambda: submit()
     submit_button.grid(column=0, row=row, sticky=N + S + W + E)
     row += 1
@@ -191,8 +190,7 @@ def fetch_video_urls(channel_url):
             href = x.get_attribute("href")
             videos_url.append(href)
             video_list.insert(END, str(i+1)+": "+text)
-        # start_auto_like = tk.Button(root, text='Start Auto Like', bg="green", fg='white', activebackground="#001C7C")
-        start_auto_like = tk.Button(root, text='Start Auto Like')
+        start_auto_like = tk.Button(root, text='Start Auto Like', bg="green", fg='white', activebackground="#001C7C")
         start_auto_like['command'] = lambda: start_auto_like_method(videos_url)
         start_auto_like.grid(column=0, row=6, sticky=N + S + W + E)
         output_box.insert(END, "Fetching Video Completed.")
@@ -216,7 +214,7 @@ def main():
         root.geometry("1000x700")
         # root.resizable(False, False)
         root.winfo_toplevel().title("Youtube Automation")
-        # root["bg"] = "#292B39"
+        root["bg"] = "#292B39"
         create_initial_screen()
         root.protocol("WM_DELETE_WINDOW", on_closing)
         root.mainloop()

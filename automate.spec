@@ -1,11 +1,11 @@
-# -*- mode: python -*-
+# -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
 
 
 a = Analysis(['automate.py'],
-             pathex=['/opt/immune/app_store/col/pluggable/UpworkTask/YoutubeAutomation'],
-             binaries=[],
+             pathex=['C:\\Users\\sar\\YoutubeAutomation'],
+             binaries=[('C:\\Users\\sar\\YoutubeAutomation\\chromedriver.exe', '.')],
              datas=[],
              hiddenimports=[],
              hookspath=[],
@@ -28,9 +28,6 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
+          upx_exclude=[],
           runtime_tmpdir=None,
-          console=False )
-app = BUNDLE(exe,
-             name='automate.app',
-             icon=None,
-             bundle_identifier=None)
+          console=True )
