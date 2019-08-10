@@ -44,9 +44,7 @@ if os.path.exists("yactfile"):
 
 root = tk.Tk()
 
-dir_path = "/".join(sys.argv[0].split("/")[:-1])
-if not dir_path:
-    dir_path = os.getcwd()
+dir_path = os.getcwd()
 # Project Title Creation
 projet_title = Label(text="YOUTUBE COMMENT LIKER", bg="WHITE")
 
@@ -97,10 +95,13 @@ def start_automation(re_initialize=False):
     try:
         global driver
         # Selenium Driver Initilization Work
-        try:
-            chromedriver = os.path.join(sys._MEIPASS, "chromedriver.exe")
-        except:
+        if os.path.isfile(os.path.join(dir_path, "chromedriver.exe")):
             chromedriver = os.path.join(dir_path, "chromedriver.exe")
+        else:
+            try:
+                chromedriver = os.path.join(sys._MEIPASS, "chromedriver.exe")
+            except:
+                chromedriver = os.path.join(dir_path, "chromedriver.exe")
         if re_initialize or driver is None:
             chrome_options = webdriver.ChromeOptions()
             chrome_options.add_argument("--mute-audio")
