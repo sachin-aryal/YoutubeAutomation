@@ -6,14 +6,41 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchWindowException
 import tkinter as tk
-import tkinter.ttk as ttk
-from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import *
 import threading
 import os, inspect
 import time
 from random import randint
+import requests
+import platform
+import socket
+import uuid
+import pickle
+from cryptography.fernet import Fernet
+ACTIVATION_STATUS = False
+TRIAL_RUN_TIME = 0
+YACT_ENC = None
+
+if os.path.exists("yacfile"):
+    pkl_file = open("yacfile", "rb")
+    data = dict(pickle.load(pkl_file))
+    yck = data.get("yck", "").decode("utf-8")[::-1]
+    cipher_suite = Fernet(yck)
+    status = cipher_suite.decrypt(data.get("ycs")).decode("utf-8")
+    hardware_id = cipher_suite.decrypt(data.get("ycid")).decode("utf-8")
+    if status == "activated" and hardware_id == str(uuid.getnode()):
+        ACTIVATION_STATUS = True
+    pkl_file.close()
+
+if os.path.exists("yactfile"):
+    pkl_file = open("yactfile", "rb")
+    data = dict(pickle.load(pkl_file))
+    yctk = data.get("yctk", "").decode("utf-8")[::-1]
+    cipher_suite = Fernet(yctk)
+    TRIAL_RUN_TIME = int((cipher_suite.decrypt(data.get("trt")).decode("utf-8")))
+    YACT_ENC = yctk
+    pkl_file.close()
 
 root = tk.Tk()
 
@@ -58,6 +85,8 @@ start_auto_like = tk.Button(root, text='Start Auto Like', bg="green", activeback
 driver = None
 
 
+SERVER = "http://localhost:8080/YoutubeCommentLikerAPI/api.php"
+
 def delay(n, fixed=False):
     if fixed:
         time.sleep(n)
@@ -94,9 +123,7 @@ def start_automation(re_initialize=False):
             else:
                 delay(2)
     except Exception as ex:
-        import traceback
-        traceback.print_exc()
-        print(str(ex))
+        output_box.insert(END, str(ex))
 
 
 def submit():
@@ -112,11 +139,94 @@ def submit():
     th = threading.Thread(target=fetch_video_urls, args=(channel_url,))
     th.start()
 
+def getpcname():
+    n1 = platform.node()
+    n2 = socket.gethostname()
+    try:
+        n3 = os.environ["COMPUTERNAME"]
+    except:
+        n3 = None
+    if n3:
+        return n3
+    elif n2:
+        return n2
+    elif n1:
+        return n1
+    else:
+        return ''
+
+def get_computer_information():
+    try:
+        computer_name = getpcname()
+        platform_info = platform.platform()
+        os_info = str(platform.uname())
+        return {"computer_name": computer_name, "platform_info": platform_info, "os_info": os_info,
+                "hardware_id": uuid.getnode()}
+    except Exception as ex:
+        return {}
+
+def save_activation_info(hardware_id):
+    global ACTIVATION_STATUS
+    ACTIVATION_STATUS = True
+    try:
+        hardware_id = str(hardware_id)
+        key = Fernet.generate_key()
+        cipher_suite = Fernet(key)
+        hardware_id = cipher_suite.encrypt(bytes(hardware_id, "utf8"))
+        status = cipher_suite.encrypt(b'activated')
+        activation_info = {'ycid': hardware_id, 'ycs' : status, 'yck': key[::-1]}
+        f = open("yacfile", "wb")
+        pickle.dump(activation_info, f)
+        f.close()
+    except:
+        pass
+
+
+def request_server(serial_key, top):
+    try:
+        params = {"sn": serial_key, "requestType": "snActivation"}
+        params.update(get_computer_information())
+        response = requests.post(url=SERVER, data=params)
+        if response.status_code == 200:
+            response_json = response.json()
+            if response_json.get("success", False):
+                save_activation_info(params.get("hardware_id"))
+                messagebox.showinfo("Success", response_json.get("message"))
+                activate_button.destroy()
+            else:
+                messagebox.showerror("Error", response_json.get("message"))
+        top.destroy()
+    except Exception as ex:
+        messagebox.showerror("Error", str(ex))
+
+
+class ActivateWindow(object):
+    def __init__(self,master):
+        top=self.top=Toplevel(master)
+        self.serial_key = ''
+        self.l=Label(top,text="Serial Key")
+        self.l.pack()
+        self.e=Entry(top)
+        self.e.pack()
+        self.b=Button(top,text='Ok',command=self.validate_serial_key)
+        self.b.pack()
+
+    def validate_serial_key(self):
+        self.serial_key = str(self.e.get())
+        th = threading.Thread(target=request_server, args=(self.serial_key, self.top, ))
+        th.start()
+
+def activate():
+    w = ActivateWindow(root)
+    activate_button["state"] = "disabled"
+    root.wait_window(w.top)
 
 def create_initial_screen():
     row = 0
     projet_title.grid(column=1, row=row, sticky=N + S + W + E, padx=20, pady=10)
-    activate_button.grid(column=2, row=row, sticky=N + S + W + E, padx=20, pady=10)
+    if not ACTIVATION_STATUS:
+        activate_button.grid(column=2, row=row, sticky=N + S + W + E, padx=20, pady=10)
+        activate_button['command'] = lambda: activate()
     row += 1
     channel_url_label.grid(column=0, row=row, sticky=N + S + W + E, padx=20, pady=(20, 10))
     channel_url_entry.grid(column=1, row=row, sticky=N + S + W + E, pady=(20, 10))
@@ -134,10 +244,32 @@ def create_initial_screen():
     root.grid_columnconfigure(2, weight=2)
     # root.grid_columnconfigure(1, weight=2)
 
+def save_increment_trial_run_time():
+    global YACT_ENC, TRIAL_RUN_TIME
+    TRIAL_RUN_TIME += 1
+    if YACT_ENC is None:
+        YACT_ENC = Fernet.generate_key()
+    cipher_suite = Fernet(YACT_ENC)
+    trt = cipher_suite.encrypt(bytes(str(TRIAL_RUN_TIME), "utf8"))
+    data = {"trt": trt, "yctk": YACT_ENC[::-1]}
+    f = open("yactfile", "wb")
+    pickle.dump(data, f)
+    f.close()
+
+
 
 def start_like_process(videos_url):
     try:
-        driver.maximize_window()
+        if TRIAL_RUN_TIME >= 3 and not ACTIVATION_STATUS:
+            output_box.insert(END, "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
+                              format("http://ytubecommentliker.com/activate"))
+            return
+        if not ACTIVATION_STATUS:
+            save_increment_trial_run_time()
+        try:
+            driver.maximize_window()
+        except NoSuchWindowException:
+            start_automation(re_initialize=True)
         driver.set_window_position(0, 0)
         driver.set_window_size(400, 400)
         urls = [videos_url[idx] for idx in video_list.curselection()]
@@ -162,6 +294,11 @@ def start_like_process(videos_url):
                             output_box.delete(END)
                             output_box.insert(END, "Like Count: {}".format(like_count))
                             delay(5)
+                            if like_count >= 10 and not ACTIVATION_STATUS:
+                                messagebox.showinfo("Trial Version",
+                                                    "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
+                                                    format("http://ytubecommentliker.com/activate"))
+                                return
                         else:
                             ActionChains(driver).move_to_element(button).perform()
                     except Exception as ex:
@@ -186,8 +323,19 @@ def stop_auto_like(th):
     th.stop()
 
 
+def get_safe_text(text):
+    char_list = [text[j] for j in range(len(text)) if ord(text[j]) in range(65536)]
+    safe_text = ''
+    for j in char_list:
+        safe_text = safe_text + j
+    return safe_text
+
 def fetch_video_urls(channel_url):
     videos_url = []
+    if TRIAL_RUN_TIME >= 3 and not ACTIVATION_STATUS:
+        messagebox.showerror("Trial Version", "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
+                          format("http://ytubecommentliker.com/activate"))
+        return
     try:
         start_automation()
         output_box.insert(END, "Fetching Video URL for youtube channel: %s" % channel_url)
@@ -196,8 +344,8 @@ def fetch_video_urls(channel_url):
         links = driver.find_elements_by_id("video-title")
         video_list.delete(0, END)
         for i, x in enumerate(links):
-            text = x.get_attribute("text")
-            href = x.get_attribute("href")
+            text = get_safe_text(x.get_attribute("text"))
+            href = get_safe_text(x.get_attribute("href"))
             videos_url.append(href)
             video_list.insert(END, str(i+1)+": "+text)
         output_box.insert(END, "Fetching Video Completed.")
@@ -227,9 +375,6 @@ def main():
         root.protocol("WM_DELETE_WINDOW", on_closing)
         root.mainloop()
     except Exception as ex:
-        import traceback
-        traceback.print_exc()
-        print(str(ex))
         output_box.insert(END, str(ex))
 
 
