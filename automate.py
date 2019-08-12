@@ -83,7 +83,7 @@ start_auto_like = tk.Button(root, text='Start Auto Like', bg="green", activeback
 driver = None
 
 
-SERVER = "http://localhost:8080/YoutubeCommentLikerAPI/api.php"
+SERVER_URL = "http://ytubecommentliker.com/api/api.php"
 
 def delay(n, fixed=False):
     if fixed:
@@ -187,7 +187,7 @@ def request_server(serial_key, top):
     try:
         params = {"sn": serial_key, "requestType": "snActivation"}
         params.update(get_computer_information())
-        response = requests.post(url=SERVER, data=params)
+        response = requests.post(url=SERVER_URL, data=params)
         if response.status_code == 200:
             response_json = response.json()
             if response_json.get("success", False):
@@ -196,6 +196,8 @@ def request_server(serial_key, top):
                 activate_button.destroy()
             else:
                 messagebox.showerror("Error", response_json.get("message"))
+        else:
+            messagebox.showerror("Error", "Server returned: {}".format(str(response.reason)))
         top.destroy()
     except Exception as ex:
         messagebox.showerror("Error", str(ex))
