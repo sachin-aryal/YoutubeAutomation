@@ -4,8 +4,8 @@ block_cipher = None
 
 
 a = Analysis(['automate.py'],
-             pathex=['C:\\Users\\sar\\YoutubeAutomation'],
-             binaries=[('C:\\Users\\sar\\YoutubeAutomation\\chromedriver.exe', '.')],
+             pathex=['C:\\Users\\sar\\PycharmProjects\\YoutubeAutomation'],
+             binaries=[('C:\\Users\\sar\\PycharmProjects\\YoutubeAutomation\\chromedriver.exe', '.')],
              datas=[],
              hiddenimports=[],
              hookspath=[],
@@ -30,4 +30,4 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=True )
+          console=False)
