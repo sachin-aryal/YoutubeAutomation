@@ -4,12 +4,12 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import NoSuchWindowException
+from selenium.common.exceptions import WebDriverException
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import *
 import threading
-import os, inspect
+import os
 import time
 from random import randint
 import requests
@@ -18,13 +18,25 @@ import socket
 import uuid
 import pickle
 from cryptography.fernet import Fernet
+import webbrowser
 
+homedir = os.path.expanduser('~')
+if sys.platform == 'win32':
+    ACTIVATION_FILE_DIRECTORY = os.sep.join([homedir, 'Application Data', 'ytubecommentliker'])
+else:
+    ACTIVATION_FILE_DIRECTORY = os.sep.join([homedir, '.ytubecommentliker'])
+
+ACTIVATION_FILE = os.sep.join(ACTIVATION_FILE_DIRECTORY, "yacfile")
+TRIAL_FILE = os.sep.join(ACTIVATION_FILE_DIRECTORY, "yactfile")
 ACTIVATION_STATUS = False
 TRIAL_RUN_TIME = 0
 YACT_ENC = None
 
-if os.path.exists("yacfile"):
-    pkl_file = open("yacfile", "rb")
+if not os.path.exists(ACTIVATION_FILE_DIRECTORY):
+    os.makedirs(ACTIVATION_FILE_DIRECTORY)
+
+if os.path.isfile(ACTIVATION_FILE):
+    pkl_file = open(ACTIVATION_FILE, "rb")
     data = dict(pickle.load(pkl_file))
     yck = data.get("yck", "").decode("utf-8")[::-1]
     cipher_suite = Fernet(yck)
@@ -34,8 +46,8 @@ if os.path.exists("yacfile"):
         ACTIVATION_STATUS = True
     pkl_file.close()
 
-if os.path.exists("yactfile"):
-    pkl_file = open("yactfile", "rb")
+if os.path.isfile(TRIAL_FILE):
+    pkl_file = open(TRIAL_FILE, "rb")
     data = dict(pickle.load(pkl_file))
     yctk = data.get("yctk", "").decode("utf-8")[::-1]
     cipher_suite = Fernet(yctk)
@@ -47,7 +59,7 @@ root = tk.Tk()
 
 dir_path = os.getcwd()
 # Project Title Creation
-projet_title = Label(text="YOUTUBE COMMENT LIKER", bg="WHITE")
+projet_title = Label(text="ytubecommentliker.com", bg="WHITE")
 
 # Channel Url Field Label
 channel_url_label = Label(text="ENTER CHANNEL URL", bg="white")
@@ -108,7 +120,7 @@ def start_automation(re_initialize=False):
             driver = webdriver.Chrome(executable_path=chromedriver, chrome_options=chrome_options)
         try:
             driver.get("https://www.youtube.com/")
-        except NoSuchWindowException:
+        except WebDriverException:
             start_automation(re_initialize=True)
         delay(5)
         # click SIGN IN button
@@ -124,6 +136,7 @@ def start_automation(re_initialize=False):
             else:
                 delay(2)
     except Exception as ex:
+        messagebox.showerror("Error", str(ex))
         output_box.insert(END, str(ex))
 
 
@@ -179,7 +192,7 @@ def save_activation_info(hardware_id):
         hardware_id = cipher_suite.encrypt(bytes(hardware_id, "utf8"))
         status = cipher_suite.encrypt(b'activated')
         activation_info = {'ycid': hardware_id, 'ycs': status, 'yck': key[::-1]}
-        f = open("yacfile", "wb")
+        f = open(ACTIVATION_FILE, "wb")
         pickle.dump(activation_info, f)
         f.close()
     except:
@@ -215,9 +228,14 @@ class ActivateWindow(object):
         self.l = Label(top, text="Serial Key")
         self.l.grid(column=0, row=0, padx=10, pady=10)
         self.e = Entry(top, width=40)
-        self.e.grid(column=1, row=0, padx=10, pady=10)
+        self.e.grid(column=1, row=0, padx=10, pady=10, columnspan=2)
         self.b = Button(top, text='Ok', command=self.validate_serial_key, width=10)
-        self.b.grid(column=1, row=2, padx=(0, 10))
+        self.b.grid(column=1, row=2, padx=(0, 0))
+        self.s = Button(top, text='Get Serial Key', command=self.get_serial_key, width=10)
+        self.s.grid(column=2, row=2, padx=(0, 100))
+
+    def get_serial_key(self):
+        webbrowser.open("http://ytubecommentliker.com/activate/")
 
     def validate_serial_key(self):
         self.serial_key = str(self.e.get())
@@ -270,7 +288,7 @@ def save_increment_trial_run_time():
     cipher_suite = Fernet(YACT_ENC)
     trt = cipher_suite.encrypt(bytes(str(TRIAL_RUN_TIME), "utf8"))
     data = {"trt": trt, "yctk": YACT_ENC[::-1]}
-    f = open("yactfile", "wb")
+    f = open(TRIAL_FILE, "wb")
     pickle.dump(data, f)
     f.close()
 
@@ -278,18 +296,18 @@ def save_increment_trial_run_time():
 def start_like_process(videos_url):
     try:
         if TRIAL_RUN_TIME >= 3 and not ACTIVATION_STATUS:
-            messagebox.showerror("Trial Version",
-                                 "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
+            output_box.insert(END, "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
                                  format("http://ytubecommentliker.com/activate"))
+            webbrowser.open("http://ytubecommentliker.com/activate")
             return
         if not ACTIVATION_STATUS:
             save_increment_trial_run_time()
         try:
             driver.maximize_window()
-        except NoSuchWindowException:
+            driver.set_window_position(0, 0)
+            driver.set_window_size(400, 400)
+        except WebDriverException:
             start_automation(re_initialize=True)
-        driver.set_window_position(0, 0)
-        driver.set_window_size(400, 400)
         urls = [videos_url[idx] for idx in video_list.curselection()]
         for url in urls:
             like_count = 0
@@ -312,13 +330,17 @@ def start_like_process(videos_url):
                             output_box.delete(END)
                             output_box.insert(END, "Like Count: {}".format(like_count))
                             delay(5)
-                            if like_count >= 10 and not ACTIVATION_STATUS:
-                                messagebox.showerror("Trial Version",
-                                                    "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
-                                                    format("http://ytubecommentliker.com/activate"))
-                                return
                         else:
+                            if not ACTIVATION_STATUS:
+                                like_count += 1
                             ActionChains(driver).move_to_element(button).perform()
+
+                        if like_count >= 10 and not ACTIVATION_STATUS:
+                            output_box.insert(END,
+                                              "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
+                                              format("http://ytubecommentliker.com/activate"))
+                            webbrowser.open("http://ytubecommentliker.com/activate")
+                            return
                     except Exception as ex:
                         pass
                 if iter_check % 2 == 0 and previous_buttons == buttons:
@@ -328,6 +350,7 @@ def start_like_process(videos_url):
                 previous_buttons = buttons
                 iter_check += 1
             output_box.insert(END, "Process completed for URL %s" % url)
+        driver.minimize()
     except Exception as ex:
         output_box.insert(END, str(ex))
 
@@ -352,14 +375,18 @@ def get_safe_text(text):
 def fetch_video_urls(channel_url):
     videos_url = []
     if TRIAL_RUN_TIME >= 3 and not ACTIVATION_STATUS:
-        messagebox.showerror("Trial Version",
-                             "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
-                             format("http://ytubecommentliker.com/activate"))
+        output_box.insert(END, "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
+                          format("http://ytubecommentliker.com/activate"))
+        webbrowser.open("http://ytubecommentliker.com/activate")
         return
     try:
-        start_automation()
+        if driver is None:
+            start_automation()
         output_box.insert(END, "Fetching Video URL for youtube channel: %s" % channel_url)
-        driver.get(channel_url)
+        try:
+            driver.get(channel_url)
+        except WebDriverException as ex:
+            start_automation(re_initialize=True)
         WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.ID, "video-title")))
         links = driver.find_elements_by_id("video-title")
         video_list.delete(0, END)
@@ -390,7 +417,7 @@ def main():
         # Set window size to 480x640
         root.geometry("800x500")
         # root.resizable(False, False)
-        root.winfo_toplevel().title("YOUTUBE COMMENT LIKER")
+        root.winfo_toplevel().title("YTUBE COMMENT LIKER")
         root["bg"] = "#ffffff"
         create_initial_screen()
         root.protocol("WM_DELETE_WINDOW", on_closing)
