@@ -25,9 +25,8 @@ if sys.platform == 'win32':
     ACTIVATION_FILE_DIRECTORY = os.sep.join([homedir, 'Application Data', 'ytubecommentliker'])
 else:
     ACTIVATION_FILE_DIRECTORY = os.sep.join([homedir, '.ytubecommentliker'])
-
-ACTIVATION_FILE = os.sep.join(ACTIVATION_FILE_DIRECTORY, "yacfile")
-TRIAL_FILE = os.sep.join(ACTIVATION_FILE_DIRECTORY, "yactfile")
+ACTIVATION_FILE = os.sep.join([ACTIVATION_FILE_DIRECTORY, "yacfile"])
+TRIAL_FILE = os.sep.join([ACTIVATION_FILE_DIRECTORY, "yactfile"])
 ACTIVATION_STATUS = False
 TRIAL_RUN_TIME = 0
 YACT_ENC = None
@@ -57,12 +56,17 @@ if os.path.isfile(TRIAL_FILE):
 
 root = tk.Tk()
 
+
+def open_url(url):
+    webbrowser.open(url)
+
+
 dir_path = os.getcwd()
 # Project Title Creation
-projet_title = Label(text="ytubecommentliker.com", bg="WHITE")
+projet_title = Label(text="YTUBECOMMENTLIKER.COM",  fg='blue', cursor="hand1")
 
 # Channel Url Field Label
-channel_url_label = Label(text="ENTER CHANNEL URL", bg="white")
+channel_url_label = Label(text="ENTER CHANNEL URL")
 
 # Channel Url Field Creation
 channel_url_var = tk.StringVar()
@@ -89,11 +93,12 @@ output_box = Listbox(root)
 output_box.config(yscrollcommand=scrollbar.set)
 scrollbar.config(command=output_box.yview)
 
-start_auto_like = tk.Button(root, text='Start Auto Like', bg="green", activebackground="#001C7C")
+start_auto_like = tk.Button(root, text='Start Auto Like', bg="green", fg='white', activebackground="#001C7C")
 
 driver = None
 
 SERVER_URL = "http://ytubecommentliker.com/api/api.php"
+ACTIVATION_URL = "http://ytubecommentliker.com/activate"
 
 
 def delay(n, fixed=False):
@@ -229,13 +234,13 @@ class ActivateWindow(object):
         self.l.grid(column=0, row=0, padx=10, pady=10)
         self.e = Entry(top, width=40)
         self.e.grid(column=1, row=0, padx=10, pady=10, columnspan=2)
-        self.b = Button(top, text='Ok', command=self.validate_serial_key, width=10)
-        self.b.grid(column=1, row=2, padx=(0, 0))
-        self.s = Button(top, text='Get Serial Key', command=self.get_serial_key, width=10)
-        self.s.grid(column=2, row=2, padx=(0, 100))
+        self.b = Button(top, text='Ok', command=self.validate_serial_key, width=15)
+        self.b.grid(column=1, row=2, padx=(0, 0), pady=(0, 10))
+        self.s = Button(top, text='Get Serial Key', command=self.get_serial_key, width=15, cursor="hand1")
+        self.s.grid(column=2, row=2, padx=(0, 0), pady=(0, 10))
 
     def get_serial_key(self):
-        webbrowser.open("http://ytubecommentliker.com/activate/")
+        open_url()
 
     def validate_serial_key(self):
         self.serial_key = str(self.e.get())
@@ -258,12 +263,14 @@ def activate():
 
 def create_initial_screen():
     row = 0
-    projet_title.grid(column=1, row=row, sticky=N + S + W + E, padx=20, pady=10)
+    projet_title.grid(column=1, row=row, sticky=N + S + W + E, padx=20, pady=(20, 10))
+    projet_title.bind("<Button-1>", lambda e, url="http://ytubecommentliker.com": open_url(url))
+
     if not ACTIVATION_STATUS:
-        activate_button.grid(column=2, row=row, sticky=N + S + W + E, padx=20, pady=10)
+        activate_button.grid(column=2, row=row, sticky=N + S + W + E, padx=20, pady=(20, 10))
         activate_button['command'] = lambda: activate()
     row += 1
-    channel_url_label.grid(column=0, row=row, sticky=N + S + W + E, padx=20, pady=(20, 10))
+    channel_url_label.grid(column=0, row=row, sticky=N + S + W + E, padx=(20, 0), pady=(20, 10))
     channel_url_entry.grid(column=1, row=row, sticky=N + S + W + E, pady=(20, 10))
     submit_button = tk.Button(root, text='IMPORT VIDEOS', bg="green", fg='white', activebackground="#001C7C")
     submit_button['command'] = lambda: submit()
@@ -297,8 +304,8 @@ def start_like_process(videos_url):
     try:
         if TRIAL_RUN_TIME >= 3 and not ACTIVATION_STATUS:
             output_box.insert(END, "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
-                                 format("http://ytubecommentliker.com/activate"))
-            webbrowser.open("http://ytubecommentliker.com/activate")
+                                 format(ACTIVATION_URL))
+            open_url(ACTIVATION_URL)
             return
         if not ACTIVATION_STATUS:
             save_increment_trial_run_time()
@@ -338,8 +345,8 @@ def start_like_process(videos_url):
                         if like_count >= 10 and not ACTIVATION_STATUS:
                             output_box.insert(END,
                                               "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
-                                              format("http://ytubecommentliker.com/activate"))
-                            webbrowser.open("http://ytubecommentliker.com/activate")
+                                              format(ACTIVATION_URL))
+                            open_url(ACTIVATION_URL)
                             return
                     except Exception as ex:
                         pass
@@ -376,8 +383,8 @@ def fetch_video_urls(channel_url):
     videos_url = []
     if TRIAL_RUN_TIME >= 3 and not ACTIVATION_STATUS:
         output_box.insert(END, "Please upgrade to pro version for unlimited auto likes. Please visit: {}".
-                          format("http://ytubecommentliker.com/activate"))
-        webbrowser.open("http://ytubecommentliker.com/activate")
+                          format(ACTIVATION_URL))
+        open_url(ACTIVATION_URL)
         return
     try:
         if driver is None:
@@ -418,7 +425,7 @@ def main():
         root.geometry("800x500")
         # root.resizable(False, False)
         root.winfo_toplevel().title("YTUBE COMMENT LIKER")
-        root["bg"] = "#ffffff"
+        root["bg"] = "#eff0f1"
         create_initial_screen()
         root.protocol("WM_DELETE_WINDOW", on_closing)
         root.mainloop()
