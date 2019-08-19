@@ -208,7 +208,10 @@ def request_server(serial_key, top):
     try:
         params = {"sn": serial_key, "requestType": "snActivation"}
         params.update(get_computer_information())
-        response = requests.post(url=SERVER_URL, data=params)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT x.y; rv:10.0) Gecko/20100101 Firefox/10.0"
+        }
+        response = requests.post(url=SERVER_URL, data=params, headers=headers)
         activate_button["state"] = "normal"
         if response.status_code == 200:
             response_json = response.json()
