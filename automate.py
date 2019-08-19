@@ -217,7 +217,8 @@ def request_server(serial_key, top):
                 messagebox.showinfo("Success", response_json.get("message"))
                 activate_button.destroy()
             else:
-                messagebox.showerror("Error", response_json.get("message"))
+                open_url("http://ytubecommentliker.com/erroractivate/")
+                # messagebox.showerror("Error", response_json.get("message"))
         else:
             messagebox.showerror("Error", "Server returned: {}".format(str(response.reason)))
         top.destroy()
@@ -240,7 +241,7 @@ class ActivateWindow(object):
         self.s.grid(column=2, row=2, padx=(0, 0), pady=(0, 10))
 
     def get_serial_key(self):
-        open_url()
+        open_url(SERVER_URL)
 
     def validate_serial_key(self):
         self.serial_key = str(self.e.get())
