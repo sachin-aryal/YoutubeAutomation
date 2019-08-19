@@ -24,7 +24,7 @@ homedir = os.path.expanduser('~')
 if sys.platform == 'win32':
     ACTIVATION_FILE_DIRECTORY = os.sep.join([homedir, 'Application Data', 'ytubecommentliker'])
 else:
-    ACTIVATION_FILE_DIRECTORY = os.sep.join([homedir, '.ytubecommentliker'])
+    ACTIVATION_FILE_DIRECTORY = os.sep.join([homedir, 'ytubecommentliker'])
 ACTIVATION_FILE = os.sep.join([ACTIVATION_FILE_DIRECTORY, "yacfile"])
 TRIAL_FILE = os.sep.join([ACTIVATION_FILE_DIRECTORY, "yactfile"])
 ACTIVATION_STATUS = False
