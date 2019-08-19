@@ -19,6 +19,8 @@ import uuid
 import pickle
 from cryptography.fernet import Fernet
 import webbrowser
+import sys
+
 
 homedir = os.path.expanduser('~')
 if sys.platform == 'win32':
@@ -244,7 +246,7 @@ class ActivateWindow(object):
         self.s.grid(column=2, row=2, padx=(0, 0), pady=(0, 10))
 
     def get_serial_key(self):
-        open_url(SERVER_URL)
+        open_url(ACTIVATION_URL)
 
     def validate_serial_key(self):
         self.serial_key = str(self.e.get())
