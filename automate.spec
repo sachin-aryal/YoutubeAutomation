@@ -3,7 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['automate.py'],
+a = Analysis(['ytubecommentliker.py'],
              pathex=['C:\\Users\\sar\\PycharmProjects\\YoutubeAutomation'],
              binaries=[('C:\\Users\\sar\\PycharmProjects\\YoutubeAutomation\\chromedriver.exe', '.')],
              datas=[],
@@ -23,7 +23,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='automate',
+          name='ytubecommentliker',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
